@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+cognipath.db
+chroma_db/*
+!chroma_db/.gitkeep
+data/knowledge_base/*
+!data/knowledge_base/.gitkeep

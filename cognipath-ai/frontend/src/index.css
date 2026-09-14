@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-ink text-parchment font-body;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  @apply font-display;
+}
+
+/* subtle contour-line texture behind panels, drawn once via CSS
+   rather than an image asset - repeated faint concentric arcs */
+.contour-bg {
+  background-image:
+    repeating-radial-gradient(circle at 15% 20%, rgba(242, 100, 59, 0.06) 0px, rgba(242, 100, 59, 0.06) 1px, transparent 1px, transparent 34px);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #3D3560;
+  border-radius: 3px;
+}
