@@ -18,6 +18,7 @@ app.add_middleware(
     allow_origins=[
     "http://localhost:5173",
     "http://localhost:5174",
+    "https://cognipath-ai-rho.vercel.app",
     "https://cognipath-ai-oc8o6d0lf-panchalkrishna1200-alts-projects.vercel.app",
 ],
     allow_credentials=True,
