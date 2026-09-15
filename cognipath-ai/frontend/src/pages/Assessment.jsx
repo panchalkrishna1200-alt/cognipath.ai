@@ -114,7 +114,7 @@ export default function Assessment() {
               <p className="text-sm text-parchment mb-3">{q.question}</p>
 
               {/* MCQ options */}
-              {(q.type === "mcq" || (!q.type && q.options)) && (
+              {(q.type === "mcq" || (!q.type && q.options)) && q.options && Array.isArray(q.options) && q.options.length > 0 && (
                 <div className="space-y-2">
                   {q.options.map((opt, oi) => (
                     <label
@@ -136,6 +136,11 @@ export default function Assessment() {
                     </label>
                   ))}
                 </div>
+              )}
+
+              {/* MCQ with missing options - show error */}
+              {q.type === "mcq" && (!q.options || !Array.isArray(q.options) || q.options.length === 0) && (
+                <p className="text-xs text-rust">Options failed to load for this question. Please regenerate the assessment.</p>
               )}
 
               {/* Short answer textarea */}

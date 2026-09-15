@@ -267,12 +267,17 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
     if not isinstance(item["options"], list):
         return None
 
-    if len(item["options"]) != 4:
+    options = [opt for opt in item["options"] if isinstance(opt, str) and opt.strip()]
+
+    if len(options) < 2:
         return None
 
-    # Ensure all options are non-empty strings
-    if not all(isinstance(opt, str) and opt.strip() for opt in item["options"]):
-        return None
+    # Pad to 4 options if the LLM returned fewer
+    while len(options) < 4:
+        options.append(f"Option {chr(64 + len(options) + 1)}")
+
+    # Trim to 4 options if the LLM returned more
+    options = options[:4]
 
     correct_index = item["correct_index"]
     if not isinstance(correct_index, int):
@@ -282,8 +287,9 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
         except (ValueError, TypeError):
             return None
 
-    if correct_index not in range(4):
-        return None
+    # Clamp correct_index to valid range
+    if correct_index not in range(len(options)):
+        correct_index = 0
 
     bloom_level = item.get("bloom_level", "understand")
     if bloom_level not in BLOOM_LEVELS:
@@ -292,7 +298,7 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
     return {
         "type": "mcq",
         "question": item["question"].strip(),
-        "options": [opt.strip() for opt in item["options"]],
+        "options": [opt.strip() for opt in options],
         "correct_index": correct_index,
         "bloom_level": bloom_level,
         "topic": item.get("topic", topic) or topic,

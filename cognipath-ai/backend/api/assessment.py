@@ -75,6 +75,17 @@ def generate_assessment(req: GenerateRequest, db: Session = Depends(get_db)):
         context = retrieve_for_topic_multi(valid_doc_ids, topic, k=6)
         all_questions.extend(generate_questions(topic, context, req.questions_per_topic))
 
+    # Debug logging: check question structure before storing
+    import sys
+    mcq_count = sum(1 for q in all_questions if q.get("type") == "mcq")
+    mcq_with_options = sum(1 for q in all_questions if q.get("type") == "mcq" and q.get("options"))
+    qa_count = sum(1 for q in all_questions if q.get("type") == "short_answer")
+    print(
+        f"[assessment] Generated {len(all_questions)} questions: "
+        f"{mcq_count} MCQ ({mcq_with_options} with options), {qa_count} short_answer",
+        file=sys.stderr, flush=True,
+    )
+
     assessment = Assessment(
         student_id=req.student_id,
         document_id=valid_doc_ids[0] if valid_doc_ids else None,  # primary doc for backward compat
@@ -92,6 +103,14 @@ def generate_assessment(req: GenerateRequest, db: Session = Depends(get_db)):
     for q in all_questions:
         clean = {k: v for k, v in q.items() if k not in ("correct_index", "answer")}
         sanitized.append(clean)
+
+    # Debug: verify options survived sanitization
+    sanitized_with_options = sum(1 for q in sanitized if q.get("type") == "mcq" and q.get("options"))
+    print(
+        f"[assessment] Sanitized: {len(sanitized)} questions, "
+        f"{sanitized_with_options} MCQ with options",
+        file=sys.stderr, flush=True,
+    )
 
     return {
         "assessment_id": assessment.id,
