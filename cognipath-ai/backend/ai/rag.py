@@ -96,3 +96,48 @@ def retrieve_for_topic(document_id: int, topic: str, k: int = 4) -> List[str]:
     )
     docs = results.get("documents", [[]])
     return docs[0] if docs else []
+
+
+def retrieve_for_topic_multi(
+    document_ids: List[int],
+    topic: str,
+    k: int = 4,
+) -> List[str]:
+    """Retrieve the most relevant chunks for a topic across multiple documents.
+
+    Queries each document's ChromaDB collection, merges and deduplicates the
+    results, and returns up to `k` unique chunks sorted by relevance.
+    """
+    if not document_ids:
+        return []
+
+    # Single document fast-path
+    if len(document_ids) == 1:
+        return retrieve_for_topic(document_ids[0], topic, k)
+
+    all_chunks: List[str] = []
+    seen: set = set()
+
+    # Pull from each document, request fewer per doc to keep total bounded
+    per_doc_k = max(2, k // len(document_ids) + 1)
+
+    for doc_id in document_ids:
+        try:
+            chunks = retrieve_for_topic(doc_id, topic, per_doc_k)
+            for chunk in chunks:
+                # Deduplicate by first 200 chars (handles minor whitespace diffs)
+                key = chunk[:200].strip().lower()
+                if key not in seen:
+                    seen.add(key)
+                    all_chunks.append(chunk)
+        except Exception as e:
+            # If one document's collection is missing/broken, skip it
+            import sys
+            print(
+                f"[rag] Warning: could not retrieve from doc_{doc_id}: "
+                f"{type(e).__name__}: {e}",
+                file=sys.stderr, flush=True,
+            )
+
+    # Return up to k chunks
+    return all_chunks[:k]

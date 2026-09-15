@@ -18,6 +18,7 @@ export const api = {
 
   getStudent: (studentId) => request(`/api/students/${studentId}`),
 
+  // Single file upload (backward compatible)
   uploadDocument: (studentId, subject, file) => {
     const form = new FormData();
     form.append("student_id", studentId);
@@ -32,6 +33,30 @@ export const api = {
     });
   },
 
+  // Multi-file upload
+  uploadMultipleDocuments: (studentId, subject, files) => {
+    const form = new FormData();
+    form.append("student_id", studentId);
+    form.append("subject", subject);
+    for (const file of files) {
+      form.append("files", file);
+    }
+    return fetch(`${BASE_URL}/api/upload/multi`, { method: "POST", body: form }).then(
+      async (res) => {
+        if (!res.ok) {
+          const detail = await res.json().catch(() => ({}));
+          throw new Error(detail.detail || "Upload failed");
+        }
+        return res.json();
+      }
+    );
+  },
+
+  // List all documents for a student
+  getStudentDocuments: (studentId) =>
+    request(`/api/upload/documents/${studentId}`),
+
+  // Generate assessment — now accepts document_ids array
   generateAssessment: (payload) =>
     request("/api/assessment/generate", { method: "POST", body: JSON.stringify(payload) }),
 
