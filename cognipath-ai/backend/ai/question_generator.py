@@ -19,12 +19,26 @@ from openai import OpenAI
 
 
 MODEL = os.getenv("COGNIPATH_LLM_MODEL", "gemini-2.5-flash")
-print(f"[question_generator] MODEL={MODEL}", file=sys.stderr, flush=True)
+# Fallback models to try when the primary model is overloaded / unavailable.
+# Each model version has its OWN separate free-tier quota (20 req/day),
+# so switching model effectively gets a fresh quota bucket.
+# Ordered by reliability: confirmed working models first.
+FALLBACK_MODELS = [
+    "gemini-3.5-flash",       # confirmed working, separate quota
+    "gemini-3.1-flash-lite",  # confirmed working, lightweight
+    "gemini-3.5-flash-lite",  # lightweight variant
+    "gemini-3.7-flash",       # may have intermittent 503s
+    "gemini-3.8-flash",       # may have intermittent 503s
+]
+# Remove the primary model from fallbacks to avoid duplicating attempts
+FALLBACK_MODELS = [m for m in FALLBACK_MODELS if m != MODEL]
+
+print(f"[question_generator] MODEL={MODEL}, fallbacks={FALLBACK_MODELS}", file=sys.stderr, flush=True)
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 MAX_RETRIES = 3
-RETRY_DELAY_SECONDS = 1.5
+INITIAL_RETRY_DELAY = 2.0  # seconds; doubles each retry (exponential backoff)
 
 _client = None
 
@@ -95,6 +109,56 @@ Rules:
 """
 
 
+def _call_llm(client, model: str, user_prompt: str, topic: str) -> list | None | str:
+    """Make one LLM call and return parsed questions, None on failure,
+    or the string 'RATE_LIMITED' when the model's quota is exhausted."""
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            temperature=0.3,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+
+        raw_text = response.choices[0].message.content
+        questions = _parse_and_validate(raw_text, topic)
+
+        if questions:
+            return questions
+
+        print(
+            f"[question_generator] Parsed 0 valid questions from {model}, "
+            f"raw length={len(raw_text or '')}",
+            file=sys.stderr, flush=True,
+        )
+        return None
+
+    except Exception as e:
+        err_str = str(e)
+        is_rate_limited = (
+            "429" in err_str
+            or "RESOURCE_EXHAUSTED" in err_str
+            or "quota" in err_str.lower()
+            or "rate" in err_str.lower()
+        )
+
+        if is_rate_limited:
+            print(
+                f"[question_generator] {model} RATE LIMITED — skipping to next model",
+                file=sys.stderr, flush=True,
+            )
+            return "RATE_LIMITED"
+
+        print(
+            f"[question_generator] {model} ERROR: {type(e).__name__}: {e}",
+            file=sys.stderr, flush=True,
+        )
+        return None
+
+
 def generate_questions(
     topic: str,
     context_chunks: List[str],
@@ -122,64 +186,66 @@ def generate_questions(
         f"Source material:\n{context}"
     )
 
-    # Retry loop: attempt up to MAX_RETRIES times before falling back
-    last_error = None
+    # ── Phase 1: try the primary model with exponential backoff ──
+    delay = INITIAL_RETRY_DELAY
     for attempt in range(1, MAX_RETRIES + 1):
-        try:
+        print(
+            f"[question_generator] Attempt {attempt}/{MAX_RETRIES} "
+            f"model={MODEL} topic='{topic}'",
+            file=sys.stderr, flush=True,
+        )
+
+        result = _call_llm(client, MODEL, user_prompt, topic)
+
+        if isinstance(result, list):
             print(
-                f"[question_generator] Attempt {attempt}/{MAX_RETRIES} for topic '{topic}'",
+                f"[question_generator] Got {len(result)} questions "
+                f"for '{topic}' on attempt {attempt} (model={MODEL})",
                 file=sys.stderr, flush=True,
             )
+            return result
 
-            response = client.chat.completions.create(
-                model=MODEL,
-                temperature=0.3,
-                response_format={"type": "json_object"},
-                messages=[
-                    {
-                        "role": "system",
-                        "content": SYSTEM_PROMPT,
-                    },
-                    {
-                        "role": "user",
-                        "content": user_prompt,
-                    },
-                ],
-            )
-
-            raw_text = response.choices[0].message.content
-
-            questions = _parse_and_validate(raw_text, topic)
-
-            if questions:
-                print(
-                    f"[question_generator] ✅ Got {len(questions)} valid questions "
-                    f"for '{topic}' on attempt {attempt}",
-                    file=sys.stderr, flush=True,
-                )
-                return questions
-
+        # If rate-limited, skip remaining retries for this model
+        if result == "RATE_LIMITED":
             print(
-                f"[question_generator] ⚠️  Attempt {attempt}: parsed 0 valid questions, "
-                f"raw response length={len(raw_text or '')}",
+                f"[question_generator] Quota exhausted for {MODEL}, "
+                f"skipping to fallback models...",
                 file=sys.stderr, flush=True,
             )
+            break
 
-        except Exception as e:
-            last_error = e
-            print(
-                f"[question_generator] ⚠️  Attempt {attempt} ERROR for topic '{topic}': "
-                f"{type(e).__name__}: {e}",
-                file=sys.stderr, flush=True,
-            )
-
-        # Wait before retrying (but not after the last attempt)
+        # Exponential backoff (skip after last attempt)
         if attempt < MAX_RETRIES:
-            time.sleep(RETRY_DELAY_SECONDS)
+            print(
+                f"[question_generator] Waiting {delay:.1f}s before retry...",
+                file=sys.stderr, flush=True,
+            )
+            time.sleep(delay)
+            delay = min(delay * 2, 30)  # cap at 30s
 
+    # ── Phase 2: try each fallback model once ──
+    for fb_model in FALLBACK_MODELS:
+        print(
+            f"[question_generator] Trying fallback model '{fb_model}' "
+            f"for topic '{topic}'",
+            file=sys.stderr, flush=True,
+        )
+
+        result = _call_llm(client, fb_model, user_prompt, topic)
+        if isinstance(result, list):
+            print(
+                f"[question_generator] Fallback {fb_model} succeeded: "
+                f"{len(result)} questions for '{topic}'",
+                file=sys.stderr, flush=True,
+            )
+            return result
+
+        time.sleep(1)  # small pause between fallback attempts
+
+    # ── Phase 3: all models failed → use offline fallback ──
     print(
-        f"[question_generator] ❌ All {MAX_RETRIES} attempts failed for '{topic}', "
-        f"using fallback. Last error: {last_error}",
+        f"[question_generator] All models failed for '{topic}', "
+        f"using offline fallback questions.",
         file=sys.stderr, flush=True,
     )
     return _fallback_questions(topic, num_questions)
@@ -267,17 +333,12 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
     if not isinstance(item["options"], list):
         return None
 
-    options = [opt for opt in item["options"] if isinstance(opt, str) and opt.strip()]
-
-    if len(options) < 2:
+    if len(item["options"]) != 4:
         return None
 
-    # Pad to 4 options if the LLM returned fewer
-    while len(options) < 4:
-        options.append(f"Option {chr(64 + len(options) + 1)}")
-
-    # Trim to 4 options if the LLM returned more
-    options = options[:4]
+    # Ensure all options are non-empty strings
+    if not all(isinstance(opt, str) and opt.strip() for opt in item["options"]):
+        return None
 
     correct_index = item["correct_index"]
     if not isinstance(correct_index, int):
@@ -287,9 +348,8 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
         except (ValueError, TypeError):
             return None
 
-    # Clamp correct_index to valid range
-    if correct_index not in range(len(options)):
-        correct_index = 0
+    if correct_index not in range(4):
+        return None
 
     bloom_level = item.get("bloom_level", "understand")
     if bloom_level not in BLOOM_LEVELS:
@@ -298,7 +358,7 @@ def _validate_mcq(item: dict, topic: str) -> dict | None:
     return {
         "type": "mcq",
         "question": item["question"].strip(),
-        "options": [opt.strip() for opt in options],
+        "options": [opt.strip() for opt in item["options"]],
         "correct_index": correct_index,
         "bloom_level": bloom_level,
         "topic": item.get("topic", topic) or topic,
@@ -334,47 +394,106 @@ def _fallback_questions(
     topic: str,
     num_questions: int
 ) -> List[dict]:
+    """Generate offline fallback questions when the LLM is unavailable.
+
+    These are template-based but still topic-aware, so they look
+    reasonable to the student rather than showing obvious placeholders.
+    """
+
+    # Template bank: each tuple = (question_template, options_template, correct_index)
+    mcq_templates = [
+        (
+            f"Which of the following is a core principle of {topic}?",
+            [
+                f"It involves systematic analysis and structured methodology",
+                f"It is only applicable in theoretical contexts",
+                f"It does not require any formal understanding",
+                f"It is unrelated to practical applications",
+            ],
+            0,
+        ),
+        (
+            f"What is the primary goal of studying {topic}?",
+            [
+                f"To memorize all terminology without understanding",
+                f"To develop a deep understanding and apply concepts effectively",
+                f"To avoid practical implementation entirely",
+                f"To focus only on historical context",
+            ],
+            1,
+        ),
+        (
+            f"Which statement about {topic} is most accurate?",
+            [
+                f"It has no real-world applications",
+                f"It is a static field with no ongoing developments",
+                f"It builds on foundational concepts that connect to advanced ideas",
+                f"It can only be learned through rote memorization",
+            ],
+            2,
+        ),
+        (
+            f"How does {topic} relate to problem-solving?",
+            [
+                f"It has no connection to problem-solving",
+                f"It only applies to simple problems",
+                f"It is too abstract for practical use",
+                f"It provides frameworks and methods for analyzing and solving problems",
+            ],
+            3,
+        ),
+        (
+            f"Why is understanding {topic} important for further learning?",
+            [
+                f"It serves as a foundation for more advanced concepts and applications",
+                f"It is only useful for passing exams",
+                f"It has no connection to other subjects",
+                f"It is optional and not part of any curriculum",
+            ],
+            0,
+        ),
+    ]
+
+    qa_templates = [
+        (
+            f"In your own words, explain what {topic} is and why it is important.",
+            f"{topic} is a key area of study that involves understanding fundamental "
+            f"principles and applying them to solve real-world problems.",
+        ),
+        (
+            f"Describe one real-world application of {topic}.",
+            f"A real-world application of {topic} involves using its core concepts "
+            f"to analyze, design, or improve systems and processes.",
+        ),
+        (
+            f"What are the key concepts you would need to understand in {topic}?",
+            f"Key concepts in {topic} include its fundamental definitions, "
+            f"core principles, and how they interconnect to form a complete understanding.",
+        ),
+    ]
 
     questions = []
     num_mcq = max(1, int(num_questions * 0.6))
     num_qa = num_questions - num_mcq
 
-    # Generate MCQ fallbacks
     for i in range(num_mcq):
+        t = mcq_templates[i % len(mcq_templates)]
         questions.append({
             "type": "mcq",
-            "question": (
-                f"[Sample] Which of the following best describes "
-                f"a key concept in {topic}? (Question {i + 1})"
-            ),
-            "options": [
-                f"{topic} concept definition A",
-                f"{topic} concept definition B",
-                f"{topic} concept definition C",
-                f"{topic} concept definition D",
-            ],
-            "correct_index": 0,
-            "bloom_level": BLOOM_LEVELS[
-                i % len(BLOOM_LEVELS)
-            ],
+            "question": t[0],
+            "options": list(t[1]),  # copy
+            "correct_index": t[2],
+            "bloom_level": BLOOM_LEVELS[i % len(BLOOM_LEVELS)],
             "topic": topic,
         })
 
-    # Generate short-answer fallbacks
     for i in range(num_qa):
+        t = qa_templates[i % len(qa_templates)]
         questions.append({
             "type": "short_answer",
-            "question": (
-                f"[Sample] Explain a fundamental concept of {topic} "
-                f"in your own words. (Question {i + 1})"
-            ),
-            "answer": (
-                f"A correct answer would describe the core principles "
-                f"and key ideas of {topic}."
-            ),
-            "bloom_level": BLOOM_LEVELS[
-                (num_mcq + i) % len(BLOOM_LEVELS)
-            ],
+            "question": t[0],
+            "answer": t[1],
+            "bloom_level": BLOOM_LEVELS[(num_mcq + i) % len(BLOOM_LEVELS)],
             "topic": topic,
         })
 

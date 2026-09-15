@@ -58,12 +58,12 @@ export default function Assessment() {
   // Check if all questions are answered
   const allAnswered = assessment
     ? assessment.questions.every((q, i) => {
-        const answer = answers[i];
-        if (q.type === "short_answer") {
-          return typeof answer === "string" && answer.trim().length > 0;
-        }
-        return answer !== undefined && answer !== null;
-      })
+      const answer = answers[i];
+      if (q.type === "short_answer") {
+        return typeof answer === "string" && answer.trim().length > 0;
+      }
+      return answer !== undefined && answer !== null;
+    })
     : false;
 
   return (
@@ -102,11 +102,10 @@ export default function Assessment() {
                   {q.topic} &middot; {q.bloom_level}
                 </span>
                 <span
-                  className={`text-xs px-2 py-0.5 border ${
-                    q.type === "short_answer"
+                  className={`text-xs px-2 py-0.5 border ${q.type === "short_answer"
                       ? "border-amber-400 text-amber-400"
                       : "border-sky-400 text-sky-400"
-                  }`}
+                    }`}
                 >
                   {q.type === "short_answer" ? "Q&A" : "MCQ"}
                 </span>
@@ -119,11 +118,10 @@ export default function Assessment() {
                   {q.options.map((opt, oi) => (
                     <label
                       key={oi}
-                      className={`block px-3 py-2 border cursor-pointer text-sm ${
-                        answers[i] === oi
-                          ? "border-trail bg-ink text-parchment"
-                          : "border-contour text-mist hover:border-trail"
-                      }`}
+                      className={`block px-3 py-2 border cursor-pointer text-sm ${answers[i] === oi
+                        ? "border-trail bg-ink text-parchment"
+                        : "border-contour text-mist hover:border-trail"
+                        }`}
                     >
                       <input
                         type="radio"
@@ -136,11 +134,6 @@ export default function Assessment() {
                     </label>
                   ))}
                 </div>
-              )}
-
-              {/* MCQ with missing options - show error */}
-              {q.type === "mcq" && (!q.options || !Array.isArray(q.options) || q.options.length === 0) && (
-                <p className="text-xs text-rust">Options failed to load for this question. Please regenerate the assessment.</p>
               )}
 
               {/* Short answer textarea */}
@@ -202,9 +195,8 @@ export default function Assessment() {
               {result.qa_feedback.map((fb, i) => (
                 <div
                   key={i}
-                  className={`border-l-2 pl-3 py-2 ${
-                    fb.correct ? "border-emerald-400" : "border-rust"
-                  }`}
+                  className={`border-l-2 pl-3 py-2 ${fb.correct ? "border-emerald-400" : "border-rust"
+                    }`}
                 >
                   <p className="text-xs text-mist mb-1">{fb.topic}</p>
                   <p className="text-sm text-parchment mb-2">{fb.question}</p>
@@ -218,9 +210,8 @@ export default function Assessment() {
                   </p>
                   {fb.feedback && (
                     <p
-                      className={`text-xs mt-1 ${
-                        fb.correct ? "text-emerald-400" : "text-amber-400"
-                      }`}
+                      className={`text-xs mt-1 ${fb.correct ? "text-emerald-400" : "text-amber-400"
+                        }`}
                     >
                       {fb.feedback}
                     </p>
