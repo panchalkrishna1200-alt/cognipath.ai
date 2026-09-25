@@ -14,6 +14,8 @@ import AdminAnalytics from "./pages/AdminAnalytics.jsx";
 import TrainingRoiDashboard from "./pages/TrainingRoiDashboard.jsx";
 import CareerPathGenerator from "./pages/CareerPathGenerator.jsx";
 import StudentTrack from "./pages/StudentTrack.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import StudentDashboard from "./pages/StudentDashboard.jsx";
 
 const StudentContext = createContext(null);
 export const useStudent = () => useContext(StudentContext);
@@ -295,6 +297,8 @@ export default function App() {
           <Route path="/career" element={<CareerPathGenerator />} />
           <Route path="/student-track" element={<StudentTrack />} />
           <Route path="/exam-pathway" element={<StudentTrack />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="*" element={<Navigate to="/profile" replace />} />
         </Route>
       </Routes>
