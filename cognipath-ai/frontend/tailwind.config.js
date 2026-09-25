@@ -4,6 +4,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        // SamarthSetu Light Enterprise Theme
+        govNavy: "#0F2F64",
+        govNavyDark: "#0A1D3F",
+        govNavyHover: "#173E80",
+        govOrange: "#F97316",
+        govOrangeDark: "#EA580C",
+        govBg: "#F8FAFC",
+        govBorder: "#E2E8F0",
+        govText: "#0F172A",
+        govMuted: "#64748B",
+        govLightMuted: "#94A3B8",
+        govBlueLight: "#EFF6FF",
+        govBlueActive: "#2563EB",
+
+        // Legacy palette support
         ink: "#1C1730",
         inkLight: "#231E3D",
         inkLighter: "#2A2450",
@@ -16,19 +31,16 @@ export default {
         trailGlow: "rgba(242, 100, 59, 0.15)",
         moss: "#4ADE80",
         mossGlow: "rgba(74, 222, 128, 0.12)",
-        amber: "#FBBF24",
         amberGlow: "rgba(251, 191, 36, 0.12)",
         rust: "#EF4444",
         rustGlow: "rgba(239, 68, 68, 0.12)",
         mist: "#A79FC7",
-        sky: "#60A5FA",
         skyGlow: "rgba(96, 165, 250, 0.12)",
-        violet: "#A78BFA",
         violetGlow: "rgba(167, 139, 250, 0.12)",
       },
       fontFamily: {
-        display: ["'Outfit'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
+        display: ["'Inter'", "'Outfit'", "sans-serif"],
+        body: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },
       borderRadius: {
         '2xl': '1rem',

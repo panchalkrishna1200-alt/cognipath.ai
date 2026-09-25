@@ -13,6 +13,16 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  checkHealth: () => request("/"),
+
+  matchSkills: (text, engine = "langchain") =>
+    request("/api/skills/match", {
+      method: "POST",
+      body: JSON.stringify({ text, engine }),
+    }),
+
+  getSkillFramework: () => request("/api/skills/framework"),
+
   createStudent: (payload) =>
     request("/api/students", { method: "POST", body: JSON.stringify(payload) }),
 
@@ -69,4 +79,22 @@ export const api = {
     request(`/api/roadmap/${studentId}/generate?weeks=${weeks}`, { method: "POST" }),
 
   getLatestRoadmap: (studentId) => request(`/api/roadmap/${studentId}/latest`),
+
+  // Training ROI Dashboard methods
+  getTrainingRoiAnalytics: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/api/training-roi/analytics${qs ? `?${qs}` : ""}`);
+  },
+
+  // AI Career Path Generator methods
+  getCareerTracks: (scores = {}) => {
+    const qs = new URLSearchParams(scores).toString();
+    return request(`/api/career-path/tracks${qs ? `?${qs}` : ""}`);
+  },
+
+  simulateCareerGrowth: (payload) =>
+    request("/api/career-path/simulate", { method: "POST", body: JSON.stringify(payload) }),
+
+  generateCareerAdvice: (payload) =>
+    request("/api/career-path/advise", { method: "POST", body: JSON.stringify(payload) }),
 };
