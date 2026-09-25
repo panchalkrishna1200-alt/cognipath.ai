@@ -162,11 +162,12 @@ const SIDEBAR_ITEMS = [
     ),
   },
   {
-    to: "/admin",
-    label: "Admin Analytics",
+    to: "/student-track",
+    label: "Student / ISS·JSO·SSC",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
       </svg>
     ),
   },
@@ -555,6 +556,7 @@ export default function Layout() {
                 { to: "/upload", label: "AI Diagnostic Assessment" },
                 { to: "/results", label: "Assessment Results" },
                 { to: "/learning-path", label: "iGOT Courses" },
+                { to: "/student-track", label: "🎓 Student / ISS·JSO·SSC" },
                 { to: "/career-path", label: "Career Pathways" },
                 { to: "/training-roi", label: "Training ROI" },
                 { to: "/admin", label: "MDO Admin Heatmap" },
