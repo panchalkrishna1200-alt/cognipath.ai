@@ -103,10 +103,10 @@ export default function AdminDashboard() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Admin</span>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded font-medium">MDO Analytics Dashboard</span>
+              <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded font-medium">MDO Analytics Dashboard</span>
             </div>
-            <h1 className="text-2xl font-black">Workforce Competency Intelligence</h1>
-            <p className="text-blue-200 text-sm mt-1">MoSPI · FRAC 4-Pillar Framework · {totalOfficials} Officials Tracked</p>
+            <h1 className="text-2xl font-black text-white">Workforce Competency Intelligence</h1>
+            <p className="text-blue-200 text-sm mt-1 text-white/80">MoSPI · FRAC 4-Pillar Framework · {totalOfficials} Officials Tracked</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={exportCSV}

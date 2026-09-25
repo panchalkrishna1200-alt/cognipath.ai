@@ -236,37 +236,35 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
-      {/* ── 1. Top Indian National Tricolor Accent Bar ── */}
-      <div className="h-1 bg-gradient-to-r from-[#FF9933] via-white to-[#138808]"></div>
 
-      {/* ── 2. Official Government of India Top Portal Micro-Header ── */}
-      <div className="bg-[#0B1E3B] text-slate-200 text-[11px] px-4 sm:px-6 py-1 border-b border-blue-950/80">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="font-semibold text-white tracking-wide flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#FF9933]"></span>
-              भारत सरकार &bull; Government of India
-            </span>
-            <span className="hidden md:inline text-blue-300/40">|</span>
-            <span className="hidden md:inline text-slate-300 font-medium">
-              कार्मिक एवं प्रशिक्षण विभाग (DoPT) &bull; MoSPI
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-[11px]">
-            <span className="hidden sm:inline text-amber-300 font-semibold tracking-wide">
-              कौशल से सामर्थ्य &bull; Rule to Role
-            </span>
-            <div className="flex items-center gap-1 text-slate-300">
+      {/* ── FULLY STICKY TOP HEADER: Tricolor + Govt Bar + Branding + Nav + Demo Ribbon ── */}
+      <header className="sticky top-0 z-50 bg-white shadow-sm">
+        {/* 1. Tricolor Accent Bar */}
+        <div className="h-1 bg-gradient-to-r from-[#FF9933] via-white to-[#138808]"></div>
+        {/* 2. Govt Micro-Header */}
+        <div className="bg-[#0B1E3B] text-slate-200 text-[11px] px-4 sm:px-6 py-1 border-b border-blue-950/80">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-white tracking-wide flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-[#FF9933]"></span>
+                भारत सरकार &bull; Government of India
+              </span>
+              <span className="hidden md:inline text-blue-300/40">|</span>
+              <span className="hidden md:inline text-slate-300 font-medium">
+                कार्मिक एवं प्रशिक्षण विभाग (DoPT) &bull; MoSPI
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="hidden sm:inline text-amber-300 font-semibold tracking-wide">
+                कौशल से सामर्थ्य &bull; Rule to Role
+              </span>
               <span className="px-1.5 py-0.5 rounded bg-blue-900/80 text-[10px] text-blue-200 border border-blue-800 font-mono font-bold">
                 FRAC 2.0 Aligned
               </span>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ── 3. iGOT Karmayogi Bharat Main Branding Header ── */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200/90 shadow-xs">
+        {/* 3. Main Branding Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4">
           {/* Left Brand */}
           <div className="flex items-center gap-3">

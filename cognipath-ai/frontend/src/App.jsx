@@ -16,6 +16,7 @@ import CareerPathGenerator from "./pages/CareerPathGenerator.jsx";
 import StudentTrack from "./pages/StudentTrack.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 
 const StudentContext = createContext(null);
 export const useStudent = () => useContext(StudentContext);
@@ -273,6 +274,8 @@ export default function App() {
       }}
     >
       <Routes>
+        {/* Public Landing Page */}
+        <Route path="/" element={<LandingPage />} />
         {/* Standalone Login route */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
