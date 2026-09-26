@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useStudent } from "../App.jsx";
 import {
   BarChart,
   Bar,
@@ -364,24 +365,38 @@ const COMPETENCY_CHART_DATA = [
 ];
 
 export default function TrainingRoiDashboard() {
+  const { student } = useStudent();
+
+  // RBAC: only Division Admin / Content Admin / Supervisor roles can filter across divisions
+  // Officers see only their own division's training data
+  const isAdmin = ["Division Admin", "Content Admin", "Supervisor", "MDO Admin"].some(
+    r => student?.role?.includes(r) || student?.designation?.includes("Director") || student?.designation?.includes("Senior Statistical Officer")
+  );
+  const officerDivision = student?.division || student?.department || "";
+
   const [selectedDept, setSelectedDept] = useState("all");
   const [selectedState, setSelectedState] = useState("all");
   const [selectedRole, setSelectedRole] = useState("all");
-  const [activeTableTab, setActiveTableTab] = useState("all"); // "all" | "flagged" | "high_impact"
-  const [breakdownView, setBreakdownView] = useState("department"); // "department" | "state" | "role"
+  const [activeTableTab, setActiveTableTab] = useState("all");
+  const [breakdownView, setBreakdownView] = useState("department");
   const [selectedCourseForAudit, setSelectedCourseForAudit] = useState(null);
 
-  // Filtered training courses
+  // Filtered training courses — if officer, auto-scope to own division
   const filteredPrograms = useMemo(() => {
     return MASTER_TRAINING_PROGRAMS.filter((p) => {
-      if (selectedDept !== "all" && !p.department.includes(selectedDept)) return false;
-      if (selectedState !== "all" && !p.state.includes(selectedState)) return false;
-      if (selectedRole !== "all" && !p.role.includes(selectedRole)) return false;
+      // RBAC scope — officer only sees own division
+      if (!isAdmin && officerDivision && !p.department.toLowerCase().includes(officerDivision.split(" ")[0].toLowerCase())) {
+        // Allow through if it's a ministry-wide course
+        if (!p.department.toLowerCase().includes("all") && !p.department.toLowerCase().includes("national")) return false;
+      }
+      if (isAdmin && selectedDept !== "all" && !p.department.includes(selectedDept)) return false;
+      if (isAdmin && selectedState !== "all" && !p.state.includes(selectedState)) return false;
+      if (isAdmin && selectedRole !== "all" && !p.role.includes(selectedRole)) return false;
       if (activeTableTab === "flagged" && !p.verdict.includes("Ineffective")) return false;
       if (activeTableTab === "high_impact" && !p.verdict.includes("High Impact")) return false;
       return true;
     });
-  }, [selectedDept, selectedState, selectedRole, activeTableTab]);
+  }, [selectedDept, selectedState, selectedRole, activeTableTab, isAdmin, officerDivision]);
 
   // Aggregate stats from filtered items
   const totalEnrolled = useMemo(
@@ -459,7 +474,7 @@ export default function TrainingRoiDashboard() {
         </div>
       </div>
 
-      {/* ── Filter Bar: Department, State, Role ── */}
+      {/* ── Filter Bar: Admin-only — officers see a locked scope notice ── */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -467,80 +482,66 @@ export default function TrainingRoiDashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Segment Training Performance Filters
+              {isAdmin ? "Segment Training Performance Filters" : "Training Scope"}
             </span>
+            {!isAdmin && (
+              <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                🔒 Scoped to your division
+              </span>
+            )}
           </div>
-
-          {(selectedDept !== "all" || selectedState !== "all" || selectedRole !== "all") && (
-            <button
-              onClick={() => {
-                setSelectedDept("all");
-                setSelectedState("all");
-                setSelectedRole("all");
-              }}
-              className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
-            >
-              Reset Filters &times;
-            </button>
+          {isAdmin && (selectedDept !== "all" || selectedState !== "all" || selectedRole !== "all") && (
+            <button onClick={() => { setSelectedDept("all"); setSelectedState("all"); setSelectedRole("all"); }}
+              className="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors">Reset ×</button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Department Filter */}
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">
-              Filter by Department / Division
-            </label>
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            >
-              <option value="all">All Divisions (National Scope)</option>
-              <option value="Field Operations Division (FOD)">Field Operations Division (FOD)</option>
-              <option value="National Accounts Division (NAD)">National Accounts Division (NAD)</option>
-              <option value="Price Statistics Division">Price Statistics Division</option>
-              <option value="Data Informatics & Innovation (DIID)">Data Informatics & Innovation (DIID)</option>
-            </select>
+        {/* Officer locked view */}
+        {!isAdmin && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
+            <strong>Data scope:</strong> Showing training ROI data relevant to your division (<strong>{officerDivision || "your assigned division"}</strong>). Cross-division aggregation is available to Division Admins and Supervisors only — this is consistent with the DPDP Act 2023 data minimisation principle.
           </div>
+        )}
 
-          {/* State / Zone Filter */}
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">
-              Filter by State / Regional Zone
-            </label>
-            <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            >
-              <option value="all">All States & Zones</option>
-              <option value="Maharashtra">Maharashtra & Western Zone</option>
-              <option value="Uttar Pradesh">Uttar Pradesh & Northern Zone</option>
-              <option value="Delhi NCR">Delhi NCR & Central HQ</option>
-              <option value="Tamil Nadu">Tamil Nadu & Southern Zone</option>
-              <option value="West Bengal">West Bengal & Eastern Zone</option>
-            </select>
+        {/* Admin-only cross-division filters */}
+        {isAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">Filter by Department / Division</label>
+              <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}
+                className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+                <option value="all">All Divisions (National Scope)</option>
+                <option value="Field Operations Division (FOD)">FOD — Field Operations Division</option>
+                <option value="National Accounts Division (NAD)">NAD — National Accounts Division</option>
+                <option value="Price Statistics Division">PSD — Price Statistics Division</option>
+                <option value="Data Informatics & Innovation (DIID)">DIID — Data Informatics & Innovation</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">Filter by State / Regional Zone</label>
+              <select value={selectedState} onChange={(e) => setSelectedState(e.target.value)}
+                className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+                <option value="all">All States & Zones</option>
+                <option value="Maharashtra">Maharashtra & Western Zone</option>
+                <option value="Uttar Pradesh">Uttar Pradesh & Northern Zone</option>
+                <option value="Delhi NCR">Delhi NCR & Central HQ</option>
+                <option value="Tamil Nadu">Tamil Nadu & Southern Zone</option>
+                <option value="West Bengal">West Bengal & Eastern Zone</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">Filter by Cadre / Designation</label>
+              <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+                <option value="all">All Cadres & Roles</option>
+                <option value="Statistical Officer (SO)">Statistical Officer (SO)</option>
+                <option value="Senior Statistical Officer (SSO)">Senior Statistical Officer (SSO)</option>
+                <option value="Field Investigator (FI)">Field Investigator (FI)</option>
+                <option value="Data Analyst (DA)">Data Analyst (DA)</option>
+              </select>
+            </div>
           </div>
-
-          {/* Cadre / Role Filter */}
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1.5">
-              Filter by Cadre / Designation
-            </label>
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            >
-              <option value="all">All Cadres & Roles</option>
-              <option value="Statistical Officer (SO)">Statistical Officer (SO)</option>
-              <option value="Senior Statistical Officer (SSO)">Senior Statistical Officer (SSO)</option>
-              <option value="Field Investigator (FI)">Field Investigator (FI)</option>
-              <option value="Data Analyst (DA)">Data Analyst (DA)</option>
-            </select>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ── KPI Hero Cards: Attendance vs Real Skill Gain ── */}

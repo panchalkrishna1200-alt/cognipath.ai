@@ -179,21 +179,31 @@ export default function LandingPage() {
                 India's first AI-enabled competency intelligence platform for MoSPI officials and statistical service aspirants — powered by iGOT Karmayogi, NSSTA TPAC & RAG-driven assessment.
               </p>
 
-              {/* CTAs */}
-              <div className="flex flex-wrap gap-4">
-                <button onClick={() => navigate("/register")}
-                  className="px-7 py-3.5 bg-amber-400 hover:bg-amber-300 text-amber-900 font-black rounded-2xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
-                  🎓 Student — Apply Now
-                </button>
-                <button onClick={() => navigate("/login")}
-                  className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 transition-all text-sm">
-                  👔 Official — Log In
-                </button>
+              {/* Two clearly differentiated entry paths */}
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => navigate("/register")}
+                    className="px-7 py-3.5 bg-amber-400 hover:bg-amber-300 text-amber-900 font-black rounded-2xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm">
+                    🎓 Student / Aspirant — Apply Now
+                  </button>
+                  <p className="text-[11px] text-blue-300 text-center">
+                    ISS · JSO · SSC aspirants &amp; new entrants
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => navigate("/login")}
+                    className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 transition-all text-sm">
+                    👔 Government Official — Log In
+                  </button>
+                  <p className="text-[11px] text-blue-300 text-center">
+                    Existing MoSPI officers &amp; MDO admins
+                  </p>
+                </div>
               </div>
 
               {/* Trust badges */}
-              <div className="flex flex-wrap items-center gap-4 mt-8">
-                {["iGOT Karmayogi", "NSSTA TPAC", "MoSPI FRAC", "DPDP Compliant"].map(b => (
+              <div className="flex flex-wrap items-center gap-4 mt-6">
+                {["iGOT Karmayogi", "NSSTA TPAC", "MoSPI FRAC BDF", "DPDP Act 2023"].map(b => (
                   <span key={b} className="text-[11px] bg-white/10 text-blue-200 border border-white/20 px-3 py-1 rounded-full font-semibold">{b}</span>
                 ))}
               </div>

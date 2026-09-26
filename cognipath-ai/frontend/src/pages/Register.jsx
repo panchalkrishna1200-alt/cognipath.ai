@@ -16,7 +16,7 @@ const DEPARTMENTS = [
   "National Accounts Division (NAD)",
   "Price Statistics Division",
   "National Statistical Systems Training Academy (NSSTA)",
-  "Survey Design & Research Division",
+  "Household Survey Division (HSD)",   // ← renamed from SDRD in Aug 2024
   "Economic Statistics Division",
   "Social Statistics Division",
   "Other",
@@ -363,14 +363,19 @@ export default function Register() {
                         <option value="Expert (Level 5)">Expert (Level 5)</option>
                       </select>
                     </div>
+                    {/* DPDP Consent — required for competency profiling */}
+                    <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900">
+                      <p className="font-bold mb-1">📋 Data Processing Notice — DPDP Act 2023</p>
+                      <p className="text-amber-800 leading-relaxed">
+                        CogniPath AI will collect and process your competency assessment data, quiz results, and training records to generate personalised learning recommendations. This data is processed on behalf of your Ministry/Department under the <strong>Digital Personal Data Protection Act 2023</strong>. No personal data is shared with third parties. You may request data deletion at any time.
+                      </p>
+                    </div>
                     <label className={`flex items-start gap-3 cursor-pointer p-3 rounded-xl border transition-all ${
                       errors.agreeTerms ? "border-rose-300 bg-rose-50/40" : "border-slate-200 bg-slate-50/50 hover:bg-slate-100"
                     }`}>
                       <input type="checkbox" checked={form.agreeTerms} onChange={set("agreeTerms")} className="mt-0.5 accent-[#0F2F64]" />
                       <span className="text-xs text-slate-600 leading-relaxed">
-                        I agree to the <span className="text-blue-600 font-medium underline cursor-pointer">Terms of Service</span> and{" "}
-                        <span className="text-blue-600 font-medium underline cursor-pointer">Privacy Policy</span> of the iGOT Karmayogi platform.
-                        I understand my competency data will be used to personalize training recommendations.
+                        I have read and understood the Data Processing Notice above. I consent to CogniPath AI processing my competency and training data for personalised learning under the iGOT Karmayogi platform. I understand I may withdraw consent at any time by contacting the platform administrator.
                       </span>
                     </label>
                     {errors.agreeTerms && <p className="text-rose-500 text-xs">{errors.agreeTerms}</p>}
@@ -402,11 +407,12 @@ export default function Register() {
                         </div>
                       ))}
                     </div>
-                    <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 flex items-start gap-3">
-                      <span className="text-blue-500 text-lg mt-0.5">ℹ️</span>
-                      <p className="text-xs text-blue-800 leading-relaxed">
-                        After registration, your AI-personalized competency baseline will be generated automatically based on your role. You can take a full assessment to calibrate your scores precisely.
-                      </p>
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 flex items-start gap-3">
+                      <span className="text-emerald-600 text-base mt-0.5">✅</span>
+                      <div className="text-xs text-emerald-800">
+                        <p className="font-bold mb-0.5">DPDP Consent: Confirmed</p>
+                        <p className="leading-relaxed">After registration, your AI-personalised competency baseline will be generated automatically based on your role. You may take a full assessment to calibrate your scores. Your data is processed under DPDP Act 2023.</p>
+                      </div>
                     </div>
                   </div>
                 )}
