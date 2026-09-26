@@ -170,9 +170,9 @@ export default function LandingPage() {
                 Smart India Hackathon 2026 · SIH26101 · Team NextGen Minds
               </div>
 
-              <h1 className="text-4xl lg:text-5xl font-black leading-tight mb-5">
+              <h1 className="text-4xl lg:text-5xl font-black leading-tight mb-5 text-amber-400">
                 Diagnose the Gap.<br />
-                <span className="text-amber-400">Adapt the Path.</span><br />
+                Adapt the Path.<br />
                 Master the Topic.
               </h1>
               <p className="text-blue-200 text-lg leading-relaxed mb-8 max-w-xl">
@@ -197,49 +197,9 @@ export default function LandingPage() {
                   <span key={b} className="text-[11px] bg-white/10 text-blue-200 border border-white/20 px-3 py-1 rounded-full font-semibold">{b}</span>
                 ))}
               </div>
-            </div>
-
-            {/* Hero Visual */}
-            <div className="hidden lg:block relative">
-              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-6 shadow-2xl">
-                {/* Mini dashboard preview */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-blue-300">Competency Profile</p>
-                    <p className="font-black text-lg">Krishna Patel</p>
-                    <p className="text-xs text-blue-300">Statistical Officer · NAD</p>
-                  </div>
-                  <div className="text-center bg-white/10 rounded-2xl p-3">
-                    <p className="text-3xl font-black text-amber-400">68%</p>
-                    <p className="text-[10px] text-blue-300">Overall</p>
-                  </div>
-                </div>
-                {/* Competency bars */}
-                {[
-                  { name: "Survey Design", score: 50, gap: true },
-                  { name: "Data Collection", score: 90, gap: false },
-                  { name: "R Programming", score: 45, gap: true },
-                  { name: "Data Governance", score: 55, gap: true },
-                  { name: "Data Visualization", score: 85, gap: false },
-                ].map(c => (
-                  <div key={c.name} className="mb-2.5">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-blue-200">{c.name}</span>
-                      <span className={`font-bold ${c.gap ? "text-rose-400" : "text-emerald-400"}`}>{c.score}%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/10 rounded-full">
-                      <div className={`h-full rounded-full ${c.gap ? "bg-rose-400" : "bg-emerald-400"}`} style={{ width: `${c.score}%` }} />
-                    </div>
-                  </div>
-                ))}
-                <div className="mt-4 bg-amber-400/20 border border-amber-400/30 rounded-xl p-3">
-                  <p className="text-xs text-amber-300 font-bold">🤖 AI Recommendation</p>
-                  <p className="text-[11px] text-white/80 mt-1">Enroll in <strong>Survey Design Fundamentals</strong> on iGOT Karmayogi to close your 30% gap.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </div> {/* end left column */}
+          </div> {/* end grid */}
+        </div> {/* end max-w container */}
       </section>
 
       {/* ── STATS SECTION ── */}
